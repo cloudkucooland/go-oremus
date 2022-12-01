@@ -86,7 +86,7 @@ func parse(in string) string {
 				passageDepth++
 			}
 			// oremus tags the lection <p class="bibletext">
-			// we only pay attention to this block
+			// we pay attention to only this block
 			if hasAttr {
 				for hasAttr {
 					ta, val, attr := z.TagAttr()
@@ -120,13 +120,13 @@ func parse(in string) string {
 			if inLection {
 				prevIsTextToken = false
 
-				tn, hasAttr := z.TagName()
+				tn, _ := z.TagName()
 				switch string(tn) {
 				case "br":
 					// log.Println("<br />")
 					out.WriteString("<br />")
 				default:
-					log.Printf("unprocessed self-close tag <%s %b />\n", tn, hasAttr)
+					log.Printf("unprocessed self-close tag <%s />\n", tn)
 				}
 			}
 		}
