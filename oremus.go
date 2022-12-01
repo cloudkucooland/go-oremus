@@ -5,10 +5,10 @@ import (
 	"context"
 	"golang.org/x/net/html"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
-	"unicode"
 )
 
 func Get(ctx context.Context, ref string) (string, error) {
@@ -45,47 +45,43 @@ func parse(in string) string {
 	var out = bytes.Buffer{}
 	var inLection = false
 	var passageDepth = 0
+	var prevIsTextToken = false
 
 	for {
 		tt := z.Next()
 		switch tt {
 		case html.ErrorToken:
-			// hit EOF -- cleanup double-spaces on the way out
-			b := bytes.Buffer{}
-			prevIsSpace := false
-
-			for {
-				i, _, err := out.ReadRune()
-				if err != nil {
-					return b.String()
-				}
-				if unicode.IsSpace(i) {
-					if !prevIsSpace {
-						b.WriteRune(' ')
-					}
-					prevIsSpace = true
-				} else {
-					b.WriteRune(i)
-					prevIsSpace = false
-				}
-			}
-			return b.String()
+			// hit EOF, quit parsing
+			// log.Println(out.String())
+			return out.String()
 		case html.TextToken:
 			if inLection {
-				out.Write(z.Text())
+				if prevIsTextToken {
+					out.WriteRune(' ')
+				}
+				txt := z.Text()
+				// log.Println(strings.TrimSpace(string(txt)))
+				out.WriteString(strings.TrimSpace(string(txt)))
+				prevIsTextToken = true
+				// out.Write(txt)
 			}
 		case html.StartTagToken:
 			tn, hasAttr := z.TagName()
 			if inLection {
+				prevIsTextToken = false
+
 				switch string(tn) {
 				case "p":
+					// log.Println("<p>")
 					out.WriteString("<p>")
 				case "nn":
-					out.WriteString("<i>")
+					// log.Println("<i>")
+					out.WriteString("\n<i>")
 				case "span":
-					out.WriteString(" <span class='adonai'>")
+					// log.Println("<span>")
+					out.WriteString("\n<span class='adonai'>")
 				default:
-					// log.Printf("%+v\n", string(tn))
+					log.Printf("unprocessed open tag %+v\n", string(tn))
 				}
 				passageDepth++
 			}
@@ -102,16 +98,18 @@ func parse(in string) string {
 			}
 		case html.EndTagToken:
 			if inLection {
+				prevIsTextToken = false
+
 				tn, _ := z.TagName()
 				switch string(tn) {
 				case "p":
 					out.WriteString("</p>\n")
 				case "nn":
-					out.WriteString("</i>")
+					out.WriteString("</i>\n")
 				case "span":
-					out.WriteString("</span> ")
+					out.WriteString("</span>\n")
 				default:
-					// log.Printf("%+v\n", string(tn))
+					log.Printf("unprocessed close tag %+v\n", string(tn))
 				}
 				if passageDepth == 0 { // found the </p> to close class="bibletext" -- quit processing
 					inLection = false
@@ -120,7 +118,16 @@ func parse(in string) string {
 			}
 		case html.SelfClosingTagToken:
 			if inLection {
-				out.WriteString(" ") // can this be removed?
+				prevIsTextToken = false
+
+				tn, hasAttr := z.TagName()
+				switch string(tn) {
+				case "br":
+					// log.Println("<br />")
+					out.WriteString("<br />")
+				default:
+					log.Printf("unprocessed self-close tag <%s %b />\n", tn, hasAttr)
+				}
 			}
 		}
 	}
