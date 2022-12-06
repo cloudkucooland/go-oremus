@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// Get fetches a passage from bible.oremus.org, parses the result and returns the text formatted as simple HTML
 func Get(ctx context.Context, ref string) (string, error) {
 	c := http.Client{}
 	data := url.Values{}
@@ -25,14 +26,14 @@ func Get(ctx context.Context, ref string) (string, error) {
 
 	resp, err := c.PostForm("https://bible.oremus.org/", data)
 	if err != nil {
-		// log.Println(err.Error())
+		log.Printf("%v\n", err)
 		return "", err
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		// log.Printf("%s\n", err.Error())
+		log.Printf("%v\n", err)
 		return "", err
 	}
 
@@ -40,6 +41,7 @@ func Get(ctx context.Context, ref string) (string, error) {
 	return parsed, nil
 }
 
+// parse is a special purpose parser for bible.oremus.org's results
 func parse(in string) string {
 	z := html.NewTokenizer(strings.NewReader(in))
 	var out = bytes.Buffer{}
@@ -52,7 +54,6 @@ func parse(in string) string {
 		switch tt {
 		case html.ErrorToken:
 			// hit EOF, quit parsing
-			// log.Println(out.String())
 			return out.String()
 		case html.TextToken:
 			if inLection {
@@ -60,10 +61,8 @@ func parse(in string) string {
 					out.WriteRune(' ')
 				}
 				txt := z.Text()
-				// log.Println(strings.TrimSpace(string(txt)))
 				out.WriteString(strings.TrimSpace(string(txt)))
 				prevIsTextToken = true
-				// out.Write(txt)
 			}
 		case html.StartTagToken:
 			tn, hasAttr := z.TagName()
@@ -72,13 +71,10 @@ func parse(in string) string {
 
 				switch string(tn) {
 				case "p":
-					// log.Println("<p>")
 					out.WriteString("<p>")
 				case "nn":
-					// log.Println("<i>")
 					out.WriteString("\n<i>")
 				case "span":
-					// log.Println("<span>")
 					out.WriteString("\n<span class='adonai'>")
 				default:
 					log.Printf("unprocessed open tag %+v\n", string(tn))
@@ -123,7 +119,6 @@ func parse(in string) string {
 				tn, _ := z.TagName()
 				switch string(tn) {
 				case "br":
-					// log.Println("<br />")
 					out.WriteString("<br />")
 				default:
 					log.Printf("unprocessed self-close tag <%s />\n", tn)
