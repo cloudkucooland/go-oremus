@@ -15,7 +15,7 @@ type Reference struct {
 	ChapVerse []ChapVerse
 }
 
-// chapVerse is the chapter/verse portion of a reference "1:14-2:7a"
+// ChapVerse is the chapter/verse portion of a reference "1:14-2:7a"
 type ChapVerse struct {
 	StartChapter     uint8
 	StartVerse       uint8
@@ -109,7 +109,9 @@ func (r *Reference) String() string {
 		buf.WriteRune(' ')
 	}
 	buf.WriteString(r.Book)
-	buf.WriteRune(' ')
+	if len(r.ChapVerse) > 0 && r.ChapVerse[0].StartChapter != 0 {
+		buf.WriteRune(' ')
+	}
 
 	for _, v := range r.ChapVerse {
 		if !first {
@@ -146,7 +148,7 @@ func (r *Reference) String() string {
 				buf.WriteRune(':')
 			}
 		}
-		if v.EndChapter != v.StartChapter || v.EndVerse != v.StartVerse {
+		if v.EndVerse != v.StartVerse {
 			verse := fmt.Sprintf("%d", v.EndVerse)
 			buf.WriteString(verse)
 			if v.EndVerseSuffix != unset {
@@ -180,7 +182,6 @@ func CleanReference(in string) (string, error) {
 		}
 		buf.WriteString(v.String())
 	}
-	log.Printf("CleanReference\nin: %s\nout: %s\n", in, buf.String())
 	return buf.String(), nil
 }
 
@@ -285,45 +286,37 @@ func allowedPrefix(book string) bool {
 	return false
 }
 
-func parseChapterVerse(in string) ([]chapVerse, error) {
-	out := make([]chapVerse, 0)
-	cv := chapVerse{}
+func parseChapterVerse(in string) ([]ChapVerse, error) {
+	out := make([]ChapVerse, 0)
+	cv := ChapVerse{}
 	workbuf := bytes.Buffer{}
 	inChapter := true // in chapter or verse
 	startRef := true  // in the first part of the reference
 	runes := []rune(in)
 
+	var unbuffer uint8
+
 	// save some redundancy
 	var wb = func() error {
+		s := workbuf.String()
+		si, err := strconv.Atoi(s)
+		if err != nil {
+			si = 0
+		}
+		unbuffer = uint8(si)
 		if inChapter {
 			if startRef {
-				sci, err := strconv.Atoi(workbuf.String())
-				if err != nil {
-					return err
-				}
-				cv.StartChapter = uint8(sci)
-				cv.EndChapter = uint8(sci)
+				cv.StartChapter = uint8(si)
+				cv.EndChapter = uint8(si)
 			} else {
-				eci, err := strconv.Atoi(workbuf.String())
-				if err != nil {
-					return err
-				}
-				cv.EndChapter = uint8(eci)
+				cv.EndChapter = uint8(si)
 			}
 		} else {
 			if startRef {
-				svi, err := strconv.Atoi(workbuf.String())
-				if err != nil {
-					return err
-				}
-				cv.StartVerse = uint8(svi)
-				cv.EndVerse = uint8(svi)
+				cv.StartVerse = uint8(si)
+				cv.EndVerse = uint8(si)
 			} else {
-				evi, err := strconv.Atoi(workbuf.String())
-				if err != nil {
-					return err
-				}
-				cv.EndVerse = uint8(evi)
+				cv.EndVerse = uint8(si)
 			}
 		}
 		workbuf.Truncate(0)
@@ -339,7 +332,7 @@ func parseChapterVerse(in string) ([]chapVerse, error) {
 			}
 			out = append(out, cv)
 			cchap := cv.StartChapter // for Gen 2:2,4,9 style references, this is ambiguous
-			cv = chapVerse{}
+			cv = ChapVerse{}
 			if !inChapter {
 				cv.StartChapter = cchap
 				cv.EndChapter = cchap
@@ -357,14 +350,17 @@ func parseChapterVerse(in string) ([]chapVerse, error) {
 			if err := wb(); err != nil {
 				return out, err
 			}
+			if !inChapter {
+				// we should have been in the chapter, but weren't, must be on the "y" of a w:x-y:z
+				cv.EndChapter = unbuffer
+			}
 			inChapter = false
 		case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
 			workbuf.WriteRune(r)
-		case 'a', 'b', 'f', 'A', 'B', 'F': // use f as shorthand for ff
+		case 'a', 'b', 'f': // f is shorthand for ff
 			if err := wb(); err != nil {
 				return out, err
 			}
-			// do we need to handle Genesis 1ff or Genesis 1-3ff? or is that noise
 			if startRef && inChapter {
 				cv.StartVerseSuffix = r
 			} else {
@@ -377,6 +373,7 @@ func parseChapterVerse(in string) ([]chapVerse, error) {
 	if err := wb(); err != nil {
 		return out, err
 	}
+	// log.Printf("%+v", cv)
 
 	out = append(out, cv)
 	return out, nil
