@@ -12,11 +12,11 @@ import (
 type Reference struct {
 	prefix    rune
 	Book      string
-	ChapVerse []chapVerse
+	ChapVerse []ChapVerse
 }
 
 // chapVerse is the chapter/verse portion of a reference "1:14-2:7a"
-type chapVerse struct {
+type ChapVerse struct {
 	StartChapter     uint8
 	StartVerse       uint8
 	StartVerseSuffix rune // a, b, f
@@ -165,7 +165,7 @@ func (r *Reference) String() string {
 
 // CleanReference takes a string, returns a normalized string for a semi-colon separated list of scripture references
 func CleanReference(in string) (string, error) {
-	r, err := parseReferences(in)
+	r, err := ParseReferences(in)
 	if err != nil {
 		return "", err
 	}
@@ -180,18 +180,18 @@ func CleanReference(in string) (string, error) {
 		}
 		buf.WriteString(v.String())
 	}
-	log.Printf("\nin: %s\nout: %s\n", in, buf.String())
-	return buf.String(), fmt.Errorf("still testing")
+	log.Printf("CleanReference\nin: %s\nout: %s\n", in, buf.String())
+	return buf.String(), nil
 }
 
 // ParseReference parses a free-form reference to a scripture passage and returns a []*Reference
 // use the stringer method to get a normalized string format back
-func parseReferences(in string) ([]*Reference, error) {
+func ParseReferences(in string) ([]*Reference, error) {
 	var out []*Reference
 
 	refs := strings.Split(in, ";")
 	for _, r := range refs {
-		parsed, err := parseReference(r)
+		parsed, err := ParseReference(r)
 		if err != nil {
 			return out, err
 		}
@@ -202,7 +202,8 @@ func parseReferences(in string) ([]*Reference, error) {
 
 // parse reference parses a single free-form reference to a scripture passage and returns a *Reference
 // use the stringer method to get a normalized string format back
-func parseReference(in string) (*Reference, error) {
+// XXX This doesn't work for "Acts of the Apostles"
+func ParseReference(in string) (*Reference, error) {
 	newRef := Reference{}
 	hasPrefix := false
 	var err error
@@ -244,7 +245,6 @@ func parseReference(in string) (*Reference, error) {
 		return &newRef, err
 	}
 
-	// log.Printf("Parsed %s => %+v\n", in, newRef)
 	return &newRef, nil
 }
 
@@ -377,8 +377,6 @@ func parseChapterVerse(in string) ([]chapVerse, error) {
 	if err := wb(); err != nil {
 		return out, err
 	}
-
-	// validate that start verse is < end verse, & chapters
 
 	out = append(out, cv)
 	return out, nil
