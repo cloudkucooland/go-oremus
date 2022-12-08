@@ -3,7 +3,6 @@ package oremus
 import (
 	"encoding/json"
 	"testing"
-	// "fmt"
 )
 
 var refs = map[string]string{
@@ -27,21 +26,32 @@ var refs = map[string]string{
 	"1st john 4:8-9":     "1 John 4:8-9",           // prefix with verse range
 }
 
-var badrefs = map[string]string{}
+// these are things that should not work, just checking the error messages (use `go test -v`)
+var badrefs = []string{"gen a", "gen a::", ", , ,", "gen 40:1-1:1", "", ";_;", "*James 1", "2nd Luke 9", "gen a:b-c:d"}
 
 func TestParseReference(t *testing.T) {
 	for k, v := range refs {
-		// fmt.Println(k)
+		t.Logf("testing %s", k)
 		parsed, err := ParseReference(k)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
 
-		p, _ := json.Marshal(parsed)
-
 		s := parsed.String()
 		if s != v {
-			t.Fatalf("[%s] did not round-trip [%s] [%s]\n[%+v]", k, v, s, string(p))
+			p, _ := json.Marshal(parsed)
+			t.Errorf("[%s] did not round-trip [%s] [%s]\n[%+v]", k, v, s, string(p))
 		}
+	}
+
+	for _, v := range badrefs {
+		t.Logf("testing %s", v)
+		parsed, err := ParseReference(v)
+		if err != nil {
+			t.Logf("%v", err)
+			continue
+		}
+
+		t.Logf("[%s] => [%s]", v, parsed.String())
 	}
 }

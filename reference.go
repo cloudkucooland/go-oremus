@@ -362,7 +362,7 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 				cv.EndVerseSuffix = r
 			}
 		default:
-			log.Println("ignoring noise %r", r)
+			log.Println("ignoring noise:", r)
 		}
 	}
 	wb()
