@@ -85,12 +85,13 @@ var books = map[string][]string{
 	"Thessalonians": {"thessalonians", "thess"},
 	"Timothy":       {"timothy", "tim"},
 	"Titus":         {"titus"},
-	"Philemon":      {"phileomon"},
+	"Philemon":      {"phileomon", "philemon"},
 	"Hebrews":       {"hebrews", "heb"},
 	"James":         {"james"},
 	"Peter":         {"peter"},
 	"Jude":          {"jude"},
 	"Revelation":    {"revelation", "rev"},
+	"Wisdom":        {"wisdom", "wis"},
 }
 
 // books which have prefixes (John makes this complicated)
@@ -284,16 +285,16 @@ func allowedPrefix(book string) bool {
 }
 
 func parseChapterVerse(in string) ([]ChapVerse, error) {
-	out := make([]ChapVerse, 0)
-	cv := ChapVerse{}
-	workbuf := bytes.Buffer{}
-	inChapter := true // in chapter or verse
-	startRef := true  // in the first part of the reference
-	runes := []rune(in)
+	runes := []rune(in)         // input string as runes
+	out := make([]ChapVerse, 0) // slice for multiple references
+	cv := ChapVerse{}           // the reference we are working on
+	workbuf := bytes.Buffer{}   // a buffer is overkill since we need, at most, 3 bytes, but this is efficient enough. Psalm 119:129
+	inChapter := true           // in chapter or verse?
+	startRef := true            // in the first part of the reference?
 
 	var unbuffer uint8
 
-	// save some redundancy
+	// a closure to save some labor below
 	var wb = func() {
 		s := workbuf.String()
 		if s == "" {
@@ -317,7 +318,7 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 			// for both
 			cv.EndVerse = uint8(si)
 		}
-		workbuf.Truncate(0)
+		workbuf.Reset()
 		return
 	}
 
@@ -367,7 +368,6 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 		}
 	}
 	wb()
-	// log.Printf("%+v", cv)
 
 	out = append(out, cv)
 	return out, nil
