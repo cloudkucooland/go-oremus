@@ -101,7 +101,7 @@ var bookswithprefix = []string{
 func (r *Reference) String() string {
 	var unset rune
 	first := true
-	var cacheChapter uint8
+	var prevChap uint8
 
 	buf := bytes.Buffer{}
 	if r.prefix != unset {
@@ -120,16 +120,14 @@ func (r *Reference) String() string {
 			first = false
 		}
 
-		if v.StartChapter != cacheChapter {
-			chap := fmt.Sprintf("%d", v.StartChapter)
-			buf.WriteString(chap)
+		if v.StartChapter != prevChap {
+			buf.WriteString(fmt.Sprintf("%d", v.StartChapter))
 		}
 		if v.StartVerse != 0 {
-			if v.StartChapter != cacheChapter {
+			if v.StartChapter != prevChap {
 				buf.WriteRune(':')
 			}
-			verse := fmt.Sprintf("%d", v.StartVerse)
-			buf.WriteString(verse)
+			buf.WriteString(fmt.Sprintf("%d", v.StartVerse))
 			if v.StartVerseSuffix != unset {
 				if v.StartVerseSuffix != 'f' {
 					buf.WriteRune(v.StartVerseSuffix)
@@ -142,15 +140,13 @@ func (r *Reference) String() string {
 			buf.WriteRune('-')
 		}
 		if v.EndChapter != v.StartChapter {
-			chap := fmt.Sprintf("%d", v.EndChapter)
-			buf.WriteString(chap)
+			buf.WriteString(fmt.Sprintf("%d", v.EndChapter))
 			if v.EndVerse != 0 {
 				buf.WriteRune(':')
 			}
 		}
 		if v.EndVerse != v.StartVerse {
-			verse := fmt.Sprintf("%d", v.EndVerse)
-			buf.WriteString(verse)
+			buf.WriteString(fmt.Sprintf("%d", v.EndVerse))
 			if v.EndVerseSuffix != unset {
 				if v.EndVerseSuffix != 'f' {
 					buf.WriteRune(v.EndVerseSuffix)
@@ -159,7 +155,7 @@ func (r *Reference) String() string {
 				}
 			}
 		}
-		cacheChapter = v.EndChapter
+		prevChap = v.EndChapter
 	}
 
 	return buf.String()
@@ -297,8 +293,11 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 	var unbuffer uint8
 
 	// save some redundancy
-	var wb = func() error {
+	var wb = func() {
 		s := workbuf.String()
+		if s == "" {
+			return
+		}
 		si, err := strconv.Atoi(s)
 		if err != nil {
 			si = 0
@@ -307,29 +306,25 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 		if inChapter {
 			if startRef {
 				cv.StartChapter = uint8(si)
-				cv.EndChapter = uint8(si)
-			} else {
-				cv.EndChapter = uint8(si)
 			}
+			// for both
+			cv.EndChapter = uint8(si)
 		} else {
 			if startRef {
 				cv.StartVerse = uint8(si)
-				cv.EndVerse = uint8(si)
-			} else {
-				cv.EndVerse = uint8(si)
 			}
+			// for both
+			cv.EndVerse = uint8(si)
 		}
 		workbuf.Truncate(0)
-		return nil
+		return
 	}
 
 	for _, r := range runes {
 		switch r {
 		case ',':
 			// , ends the current reference and starts a new one
-			if err := wb(); err != nil {
-				return out, err
-			}
+			wb()
 			out = append(out, cv)
 			cchap := cv.StartChapter // for Gen 2:2,4,9 style references, this is ambiguous
 			cv = ChapVerse{}
@@ -341,16 +336,17 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 			// no inChapter = true due to ambiguitiy above?
 		case '-', '—', '–':
 			// - moves from the first part of a reference to the end of one (either chapter or verse)
-			if err := wb(); err != nil {
-				return out, err
-			}
+			wb()
 			startRef = false
 		case ':':
 			// : moves from chapter to verse
-			if err := wb(); err != nil {
-				return out, err
+			wb()
+			if startRef && !inChapter {
+				// we should have been in the chapter, but weren't, must be on the "w" of a w:x-y:z
+				cv.StartChapter = unbuffer
+				cv.EndChapter = unbuffer
 			}
-			if !inChapter {
+			if !startRef && !inChapter {
 				// we should have been in the chapter, but weren't, must be on the "y" of a w:x-y:z
 				cv.EndChapter = unbuffer
 			}
@@ -358,21 +354,18 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 		case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
 			workbuf.WriteRune(r)
 		case 'a', 'b', 'f': // f is shorthand for ff
-			if err := wb(); err != nil {
-				return out, err
-			}
-			if startRef && inChapter {
+			wb()
+			if startRef && !inChapter {
 				cv.StartVerseSuffix = r
-			} else {
+			}
+			if !startRef && !inChapter {
 				cv.EndVerseSuffix = r
 			}
 		default:
 			log.Println("ignoring noise %r", r)
 		}
 	}
-	if err := wb(); err != nil {
-		return out, err
-	}
+	wb()
 	// log.Printf("%+v", cv)
 
 	out = append(out, cv)
