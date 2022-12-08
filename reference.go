@@ -49,6 +49,7 @@ var books = map[string][]string{
 	"Nehemiah":      {"nehemiah", "neh"},
 	"Esther":        {"esther", "esth"},
 	"Job":           {"job"},
+	"Psalm":         {"psalm"}, // sometimes it's OK to have the singular title
 	"Psalms":        {"psalms", "ps"},
 	"Proverbs":      {"proverbs", "prov"},
 	"Ecclesiastes":  {"ecclesiastes", "eccl"},
