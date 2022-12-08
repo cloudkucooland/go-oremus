@@ -1,3 +1,7 @@
+[![LICENSE](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![GoReportCard](https://goreportcard.com/badge/cloudkucooland/go-oremus)](https://goreportcard.com/report/cloudkucooland/go-oremus)
+[![GoDoc](https://godoc.org/github.com/cloudkucooland/go-oremus?status.svg)](https://godoc.org/github.com/cloudkucooland/go-oremus)
+
 # go-oremus
 ## Go library to Fetch Passages from bible.oremus.org
 
