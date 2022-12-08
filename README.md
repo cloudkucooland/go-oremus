@@ -1,11 +1,11 @@
 # go-oremus
-##Go library to Fetch Passages from bible.oremus.org
+## Go library to Fetch Passages from bible.oremus.org
 
 Currently the fetch logic & parsing is not configurable. The result is an HTML block with Most formatting is removed.
 
 ## About
 
-bible.oremus.org provides the NRSV translation of the Bible. It does not have a simple API, but the webform results are easily parsed.
+https://bible.oremus.org provides the NRSV translation of the Bible. It does not have an API, but the webform results are easily parsed.
 
 Unless you need the NRSV translation, this isn't the most appropriate package for your project.
 
