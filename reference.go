@@ -10,7 +10,7 @@ import (
 
 // Reference is the datastructure used for parsing/validating references
 type Reference struct {
-	prefix    rune
+	Prefix    rune
 	Book      string
 	ChapVerse []ChapVerse
 }
@@ -104,8 +104,8 @@ func (r *Reference) String() string {
 	var prevChap uint8
 
 	buf := bytes.Buffer{}
-	if r.prefix != unset {
-		buf.WriteRune(r.prefix)
+	if r.Prefix != unset {
+		buf.WriteRune(r.Prefix)
 		buf.WriteRune(' ')
 	}
 	buf.WriteString(r.Book)
@@ -197,7 +197,7 @@ func ParseReferences(in string) ([]*Reference, error) {
 	return out, nil
 }
 
-// parse reference parses a single free-form reference to a scripture passage and returns a *Reference
+// ParseReference parses a single free-form reference to a scripture passage and returns a *Reference
 // use the stringer method to get a normalized string format back
 // XXX This doesn't work for "Acts of the Apostles"
 func ParseReference(in string) (*Reference, error) {
@@ -210,7 +210,7 @@ func ParseReference(in string) (*Reference, error) {
 	for pos, c := range chunks {
 		if pos == 0 {
 			if b, id := isPrefix(c); b {
-				newRef.prefix = id
+				newRef.Prefix = id
 				hasPrefix = true
 				continue
 			}
@@ -326,15 +326,15 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 			// , ends the current reference and starts a new one
 			wb()
 			out = append(out, cv)
-			cchap := cv.StartChapter // for Gen 2:2,4,9 style references, this is ambiguous
+			cchap := cv.StartChapter
 			cv = ChapVerse{}
 			if !inChapter {
 				cv.StartChapter = cchap
 				cv.EndChapter = cchap
 			}
 			startRef = true
-			// no inChapter = true due to ambiguitiy above?
-		case '-', '—', '–':
+			// no inChapter = true
+		case '-', '—', '–': // hyphen, en dash, and em dashes all found in the wild
 			// - moves from the first part of a reference to the end of one (either chapter or verse)
 			wb()
 			startRef = false

@@ -12,7 +12,7 @@ func main() {
 	ctx := context.Background()
 
 	for i := 1; i < len(os.Args); i++ {
-        ref, err := oremus.CleanReference(os.Args[i])
+		ref, err := oremus.CleanReference(os.Args[i])
 		if err != nil {
 			panic(err)
 		}
