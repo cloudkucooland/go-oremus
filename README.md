@@ -5,7 +5,7 @@
 # go-oremus
 ## Go library to Fetch Passages from bible.oremus.org
 
-Currently the fetch logic & parsing is not configurable. The result is an HTML block with Most formatting is removed.
+Currently the fetch logic & parsing is not currently configurable. The result is an HTML block with most formatting removed.
 
 ## About
 
