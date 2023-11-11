@@ -1,5 +1,5 @@
 module github.com/cloudkucooland/go-oremus
 
-go 1.13
+go 1.19
 
-require golang.org/x/net v0.12.0
+require golang.org/x/net v0.18.0

@@ -319,7 +319,6 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 			cv.EndVerse = uint8(si)
 		}
 		workbuf.Reset()
-		return
 	}
 
 	for _, r := range runes {
