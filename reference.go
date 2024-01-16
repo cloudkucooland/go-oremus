@@ -10,19 +10,19 @@ import (
 
 // Reference is the datastructure used for parsing/validating references
 type Reference struct {
-	Prefix    rune
 	Book      string
 	ChapVerse []ChapVerse
+	Prefix    rune
 }
 
 // ChapVerse is the chapter/verse portion of a reference "1:14-2:7a"
 type ChapVerse struct {
+	StartVerseSuffix rune // a, b, f
+	EndVerseSuffix   rune // a, b, f
 	StartChapter     uint8
 	StartVerse       uint8
-	StartVerseSuffix rune // a, b, f
 	EndChapter       uint8
 	EndVerse         uint8
-	EndVerseSuffix   rune // a, b, f
 }
 
 // some books have a prefix, this is used to normalize those to "1, 2, 3"
