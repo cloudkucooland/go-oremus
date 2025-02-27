@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"golang.org/x/net/html"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -31,7 +31,7 @@ func Get(ctx context.Context, ref string) (string, error) {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("%v\n", err)
 		return "", err
