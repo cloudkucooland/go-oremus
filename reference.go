@@ -19,10 +19,10 @@ type Reference struct {
 type ChapVerse struct {
 	StartVerseSuffix rune // a, b, f
 	EndVerseSuffix   rune // a, b, f
-	StartChapter     uint8
-	StartVerse       uint8
-	EndChapter       uint8
-	EndVerse         uint8
+	StartChapter     int
+	StartVerse       int
+	EndChapter       int
+	EndVerse         int
 }
 
 // some books have a prefix, this is used to normalize those to "1, 2, 3"
@@ -103,7 +103,7 @@ var bookswithprefix = []string{
 func (r *Reference) String() string {
 	var unset rune
 	first := true
-	var prevChap uint8
+	var prevChap int
 
 	buf := bytes.Buffer{}
 	if r.Prefix != unset {
@@ -285,14 +285,13 @@ func allowedPrefix(book string) bool {
 }
 
 func parseChapterVerse(in string) ([]ChapVerse, error) {
-	runes := []rune(in)         // input string as runes
 	out := make([]ChapVerse, 0) // slice for multiple references
 	cv := ChapVerse{}           // the reference we are working on
 	workbuf := bytes.Buffer{}   // a buffer is overkill since we need, at most, 3 bytes, but this is efficient enough. Psalm 119:129
 	inChapter := true           // in chapter or verse?
 	startRef := true            // in the first part of the reference?
 
-	var unbuffer uint8
+	var unbuffer int
 
 	// a closure to save some labor below
 	var wb = func() {
@@ -304,24 +303,24 @@ func parseChapterVerse(in string) ([]ChapVerse, error) {
 		if err != nil {
 			si = 0
 		}
-		unbuffer = uint8(si)
+		unbuffer = si
 		if inChapter {
 			if startRef {
-				cv.StartChapter = uint8(si)
+				cv.StartChapter = si
 			}
 			// for both
-			cv.EndChapter = uint8(si)
+			cv.EndChapter = si
 		} else {
 			if startRef {
-				cv.StartVerse = uint8(si)
+				cv.StartVerse = si
 			}
 			// for both
-			cv.EndVerse = uint8(si)
+			cv.EndVerse = si
 		}
 		workbuf.Reset()
 	}
 
-	for _, r := range runes {
+	for _, r := range in {
 		switch r {
 		case ',':
 			// , ends the current reference and starts a new one

@@ -26,14 +26,14 @@ func Get(ctx context.Context, ref string) (string, error) {
 
 	resp, err := c.PostForm("https://bible.oremus.org/", data)
 	if err != nil {
-		log.Printf("%v\n", err)
+		log.Println(err.Error())
 		return "", err
 	}
 
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("%v\n", err)
+		log.Println(err.Error())
 		return "", err
 	}
 
