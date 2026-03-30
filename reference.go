@@ -294,24 +294,6 @@ func ParseReference(in string) (*Reference, error) {
 	return &newRef, nil
 }
 
-/*
-func isBook(in string) (bool, string) {
-	lc := strings.TrimSuffix(strings.ToLower(in), ".")
-	book, ok := bookLookup[lc]
-	return ok, book
-}
-
-func isPrefix(in string) (bool, rune) {
-	lc := strings.ToLower(in)
-	p, ok := prefixLookup[lc]
-	return ok, p
-} */
-
-/*
-func isSuffix(r rune) bool {
-	return r == 'a' || r == 'b' || r == 'f'
-} */
-
 type parseState int
 
 const (
@@ -328,8 +310,6 @@ func parseChapterVerse(in string) ([]ChapterVerseRange, error) {
 	var workbuf strings.Builder
 	var state parseState
 
-	// var toResolve int
-
 	// a helper to save some labor below
 	var flushBuffer = func() (int, error) {
 		s := workbuf.String()
@@ -345,8 +325,6 @@ func parseChapterVerse(in string) ([]ChapterVerseRange, error) {
 	}
 
 	for _, r := range in {
-		// toResolove = 0
-
 		switch r {
 		case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
 			workbuf.WriteRune(r)
@@ -502,7 +480,6 @@ func parseChapterVerse(in string) ([]ChapterVerseRange, error) {
 }
 
 func (cv ChapterVerseRange) Validate() error {
-	// fmt.Printf("%+v\n", cv)
 	if cv.StartChapter > cv.EndChapter {
 		return errors.New("invalid chapter range")
 	}
@@ -510,9 +487,6 @@ func (cv ChapterVerseRange) Validate() error {
 		return errors.New("invalid verse range")
 	}
 	// an entire book is a valid reference (e.g. James)
-	/* if cv.StartChapter == 0 {
-		    return errors.New("missing start chapter")
-	    } */
 	if cv.StartChapter == 0 && cv.StartVerse != 0 {
 		return errors.New("verse without chapter")
 	}

@@ -40,9 +40,9 @@ var refs = map[string]string{
 	"song of songs 9:1":      "Song of Songs 9:1",
 
 	// prefixes
-	"1 john 1":     "1 John 1",
-	"2 peter 1:1":  "2 Peter 1:1",
-	"1st john 1":   "1 John 1",
+	"1 john 1":    "1 John 1",
+	"2 peter 1:1": "2 Peter 1:1",
+	"1st john 1":  "1 John 1",
 
 	// chapters
 	"gen 1-3": "Genesis 1-3",
@@ -60,8 +60,8 @@ var refs = map[string]string{
 	"gen 1:1fff": "Genesis 1:1ff",
 
 	// commas
-	"gen 1,,2":     "Genesis 1,2",
-	"gen 1:1,,3":   "Genesis 1:1,3",
+	"gen 1,,2":   "Genesis 1,2",
+	"gen 1:1,,3": "Genesis 1:1,3",
 
 	// semicolons
 	"gen 1;;ex 2": "Genesis 1; Exodus 2",
@@ -75,21 +75,21 @@ var refs = map[string]string{
 
 // these are things that should not work, just checking the error messages (use `go test -v`)
 var badrefs = []string{
-    "gen a",
-    "gen a::",
-    ", , ,",
-    "gen 40:1-1:1",
-    "",
-    ";_;",
-    "*James 1",
-    "2nd Luke 9",
-    "gen a:b-c:d",
-    // "gen 1:0", // Genesis 1
-    "gen 1:5-1:1",
-    "gen 2-1",
-    // "gen 1:", // Genesis 1
-    "gen :1",
-    "4 john",
+	"gen a",
+	"gen a::",
+	", , ,",
+	"gen 40:1-1:1",
+	"",
+	";_;",
+	"*James 1",
+	"2nd Luke 9",
+	"gen a:b-c:d",
+	// "gen 1:0", // Genesis 1
+	"gen 1:5-1:1",
+	"gen 2-1",
+	// "gen 1:", // Genesis 1
+	"gen :1",
+	"4 john",
 	"unknown",
 	// "gen 0", // Yeilds "Genesis"
 	"gen 1:0",
@@ -178,11 +178,10 @@ func TestTables(t *testing.T) {
 func FuzzParseReference(f *testing.F) {
 	f.Add("gen 1:1")
 	f.Add("john 3:16-18")
-    f.Add("gen 1:15ff")
-    f.Add("song of songs 1:1")
-    f.Add("1 john 4:8")
-    f.Add("gen 1-2:3")
-
+	f.Add("gen 1:15ff")
+	f.Add("song of songs 1:1")
+	f.Add("1 john 4:8")
+	f.Add("gen 1-2:3")
 
 	f.Fuzz(func(t *testing.T, input string) {
 		r, err := ParseReference(input)
